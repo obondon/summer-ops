@@ -2,6 +2,8 @@
 # sys_inspect.py —— 系统巡检 Python 版（对照 DAY 18 的 sys_inspect.sh）
 
 import time                              # time.sleep(1) 对应 Shell 的 sleep 1
+import shutil
+import subprocess
 
 def check_cpu():
     # CPU 使用率：读 /proc/stat 采两次样算差值，和 Shell 版同一招
@@ -35,6 +37,19 @@ def check_mem():
     else:
         print(f"[内存] 使用率 {usage:.1f}%  ✓ 正常")
 
+def check_disk(): 
+    du = shutil.disk_usage("/")
+    usage = 100 * du.used / du.total
+    if usage > 85:
+        print(f"[磁盘] 使用率 {usage:.1f}%  ⚠ 超过 85%，告警！")
+    else:
+        print(f"[磁盘] 使用率 {usage:.1f}%  ✓ 正常")
+
+def check_users():
+    r = subprocess.run(["w", "-h"], capture_output=True, text=True)
+    users = r.stdout.splitlines() 
+    print(f"用户数为 {len(users)}")
+
 def main():
     # 总调度：报告打头，逐项检查，单项炸了不连坐
     print("=" * 40)
@@ -48,5 +63,16 @@ def main():
         check_mem()
     except Exception as e:
         print(f"[内存] 检查失败: {e}")
+    try:
+        check_disk()
+    except Exception as e:
+        print(f"[磁盘] 检查失败: {e}")
+    try:
+        check_users()
+    except Exception as e:
+        print(f"[用户] 检查失败: {e}")
+
+
+
 
 main()                                   # 跑起来
